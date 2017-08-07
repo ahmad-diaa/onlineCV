@@ -1,0 +1,7 @@
+*.exe
+*/pkg/*
+*/src/golang.org/*
+*/src/google.golang.org/*
+*/src/github.com/*
+*/src/gopkg.in/*
+mainapp/myconfig.json
