@@ -21,7 +21,8 @@ func main() {
 	// open the database
 	openDB()
 	defer closeDB()
-
+	
+	connectToRedis()
 	// set up templates
 	buildTemplates()
 

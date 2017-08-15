@@ -65,6 +65,7 @@ func handleMain(w http.ResponseWriter, r *http.Request) {
 // The route for '/app' ensures the user is logged in, and then renders the
 // app page via a template
 func handleApp(w http.ResponseWriter, r *http.Request) {
+	log.Println("App ...!")
 	if !checkLogin(r) {
 		do403(w)
 		return

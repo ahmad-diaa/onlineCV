@@ -45,7 +45,9 @@ type Config struct {
 	DbHost       string   `json:"MongoHost"`
 	DbPort       string   `json:"MongoPort"`
 	DbName       string   `json:"MongoDbname"`
-	McdHost      string   `json:"MemcachedHost"`
+	RedisHost    string   `json:"RedisHost"`
+	RedisPort    string   `json:"RedisPort"`
+ 	McdHost      string   `json:"MemcachedHost"`
 	McdPort      string   `json:"MemcachedPort"`
 	AppPort      string   `json:"AppPort"`
 }

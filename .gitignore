@@ -5,3 +5,6 @@
 */src/github.com/*
 */src/gopkg.in/*
 mainapp/myconfig.json
+kubernetes-configs/testservices.yaml
+kubernetes-configs/pods.yaml
+

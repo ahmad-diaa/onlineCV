@@ -11,8 +11,8 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
-	"sync"
 	"time"
+	"github.com/go-redis/redis"
 )
 
 // create an "enum" for dealing with responses from a login request
@@ -39,19 +39,19 @@ const (
 //
 // Note that an attacker can still assume your identity if it can access your
 // cookies, but it can't assume your identity just by knowing your ID
-//
-// Note, too, that multiple requests can access this map, so we need it to be
-// synchronized
-//
-// Lastly, note that if you have multiple servers running, and a user
-// migrates among servers, their login info will be lost, and they'll have to
-// re-log in.  The only way to avoid that is to persist this map to some
-// location that is global across nodes, and we're not going to do that in
-// this simple example.
-var cookieStore = struct {
-	sync.RWMutex
-	m map[string]string
-}{m: make(map[string]string)}
+
+
+var redisClient *redis.Client
+func connectToRedis() {
+	redisClient = redis.NewClient(&redis.Options{
+		Addr:     cfg.RedisHost+":"+cfg.RedisPort,
+		Password: "foobared", // no password set
+		DB:       0,  // use default DB
+	})
+
+	pong, err := redisClient.Ping().Result()
+	log.Println(pong, err)
+}
 
 // Check if a request is being made from an authenticated context
 func checkLogin(r *http.Request) bool {
@@ -66,11 +66,12 @@ func checkLogin(r *http.Request) bool {
 	if err == http.ErrNoCookie {
 		return false
 	}
-
-	// make sure we've got the right stuff in the hash
-	cookieStore.RLock()
-	defer cookieStore.RUnlock()
-	return cookieStore.m[cookie.Value] == key.Value
+	val, err := redisClient.Get(cookie.Value).Result()
+	if err != nil {
+		log.Println("error retrieving from redis: ", err.Error())
+		return false
+	}
+	return val == key.Value
 }
 
 func checkUser(r *http.Request, userId string) bool {
@@ -99,9 +100,10 @@ func processLogoutRequest(w http.ResponseWriter, r *http.Request) {
 	// grab the "ID" cookie, erase from map if it is found
 	id, err := r.Cookie("id")
 	if err != http.ErrNoCookie {
-		cookieStore.Lock()
-		delete(cookieStore.m, id.Value)
-		cookieStore.Unlock()
+		err := redisClient.Set(id.Value, "", 0).Err()
+		if err != nil {
+			log.Println("error deleting from redis: ", err.Error())
+		}
 		// create a log-out (info) flash
 		flash := http.Cookie{Name: "iflash", Value: "Logout successful", Path: "/"}
 		http.SetCookie(w, &flash)
@@ -187,7 +189,7 @@ func processLoginReply(w http.ResponseWriter, r *http.Request) int {
 	if u == nil {
 		// no user... let's hope this is a registration request
 		if state[:1] != "r" {
-			log.Println("Attempt to log in an unregistered user")
+			log.Println("Attempt to log in an unregistered user ")
 			return loginNotReg
 		}
 		// add a registration (0 == not active)
@@ -217,9 +219,11 @@ func processLoginReply(w http.ResponseWriter, r *http.Request) int {
 		unique := sessionId()
 		cookie = http.Cookie{Name: "key", Value: unique, Path: "/"}
 		http.SetCookie(w, &cookie)
-		cookieStore.Lock()
-		cookieStore.m[m["id"].(string)] = unique
-		cookieStore.Unlock()
+		err := redisClient.Set(m["id"].(string), unique, 0).Err()
+		if err != nil {
+			log.Println("error storing in redis ", err)
+		}
+
 		return loginOk
 	}
 }
