@@ -1,6 +1,6 @@
-FROM golang:latest
+FROM scratch
 
-ADD .   /go/src/server/
-WORKDIR /go/src/server/
-ENTRYPOINT /go/src/server/app -configfile=myconfig.json
+ADD app  /
+ADD myconfig.json /
+CMD ["/app","-configfile=myconfig.json"]
 EXPOSE 3000
