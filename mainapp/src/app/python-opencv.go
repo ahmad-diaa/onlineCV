@@ -12,7 +12,7 @@ func handleRunPython(w http.ResponseWriter, r *http.Request) {
 			do403(w)
 			return
 		}
-		url, err := url.Parse("http://compile-service:8000/")
+		url, err := url.Parse(cfg.CompileService)
 		log.Println(url.String())
 		if err != nil {
 			log.Println(err)
@@ -20,7 +20,6 @@ func handleRunPython(w http.ResponseWriter, r *http.Request) {
 		proxyReq, err := http.NewRequest(r.Method, url.String(), r.Body)
 		if err != nil {
 			log.Println("request error: ", err.Error())
-
 		}
 
 		proxyReq.Header = r.Header
@@ -30,7 +29,7 @@ func handleRunPython(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			log.Println("request to compile error: ", err.Error())
 		}
-		buf := bytes.NewBuffer(make([]byte, 0, proxyRes.ContentLength))
+		buf := bytes.NewBuffer(nil)
 		_, readErr := buf.ReadFrom(proxyRes.Body)
 		if readErr != nil {
 			log.Println("ERROR READING RESPONSE: ", readErr.Error())

@@ -146,7 +146,7 @@ func processLoginReply(w http.ResponseWriter, r *http.Request) int {
 	// convert the authorization code into a token
 	token, err := oauthConf.Exchange(oauth2.NoContext, code)
 	if err != nil {
-		log.Println("token exchange error", code)
+		log.Println("token exchange error", err.Error())
 		return errorCode
 	}
 

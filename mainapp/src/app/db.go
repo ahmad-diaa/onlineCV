@@ -58,15 +58,7 @@ func closeDB() {
 	db.Session.Close()
 }
 
-func deleteFileFromGrid(name string, bucket string) {
-	gfs := db.GridFS(bucket)
-	err := gfs.Remove(name)
-	if err != nil {
-		log.Println(err)
-		return
-	}
-	log.Println("delete succesful")
-}
+
 
 func deleteProject(projectName string, userId string) {
 	// Get collection

@@ -4,12 +4,14 @@
     "OauthGoogleScopes"       : ["https://www.googleapis.com/auth/userinfo.email"],
     "OauthGoogleRedirectUrl"  : "http://localhost:8080/auth/google/callback",
 
-    "MongoHost"     : "",
-    "MongoPort"     : "27017",
-    "MongoDbname"   : "",
-
-    "MemcachedHost" : "",
-    "MemcachedPort" : "11211",
-
-    "AppPort" : "8080"
+    "ImagesBucket"  : "CLOUD_STORAGE_BUCKET_FOR_IMAGES",
+    "CodesBucket"   : "CLOUD_STORAGE_BUCKET_FOR_CODE",
+    "MongoHost"     : "MONGODB_INTERNAL_IP",
+    "MongoPort"     : "9376",
+    "MongoDbname"   : "MONGO_DB_NAME",
+    "RedisHost"     : "REDIS_INTERNAL_IP",
+    "RedisPort"     : "6379",
+    "CompileService": "http://compile-service:8000/",
+    "AppPort" : "3000",
+    "CloudStorageCredentials" : "onlineCV-b3ad0190adc1.json"
 }

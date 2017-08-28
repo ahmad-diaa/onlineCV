@@ -11,6 +11,10 @@ import (
 	"github.com/gorilla/schema"
 	"encoding/base64"
 	"mime/multipart"
+	"golang.org/x/net/context"
+
+	"google.golang.org/api/option"
+	"cloud.google.com/go/storage"
 )
 
 var decoder = schema.NewDecoder()
@@ -211,9 +215,9 @@ func handleDeleteProject(w http.ResponseWriter, r *http.Request) {
  if temp.UserID == "" {
 	 return
  }
- deleteFileFromGrid(project.CodeFileName + project.UserID, "code")
+ deleteFileFromGCE(project.UserID + project.CodeFileName, cfg.CodesBucket, r, w)
  for _,imagename := range project.Images {
-	 deleteFileFromGrid(imagename, "image")
+	 deleteFileFromGCE(project.UserID + imagename, cfg.ImagesBucket, r, w)
  }
 	deleteProject(project.CodeFileName, project.UserID)
 }
@@ -230,7 +234,7 @@ func handleUploadCode(w http.ResponseWriter, r *http.Request) {
 			do500(w)
 			return
     }
-	bucketName  := "code"
+	bucketName  := cfg.CodesBucket
 	projectName := r.PostFormValue("codefilename")
 	cookie, _ := r.Cookie("id")
 	userId := cookie.Value
@@ -262,7 +266,7 @@ func handleUploadImage(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 
-	bucketName  := "image"
+	bucketName  := cfg.ImagesBucket
 	projectName := r.PostFormValue("codefilename")
 	cookie, _ := r.Cookie("id")
 	userId := cookie.Value
@@ -282,9 +286,13 @@ func handleUploadImage(w http.ResponseWriter, r *http.Request) {
 		do404(w)
 		return
 	}
-	project.Images = append(project.Images, temp.Images...)
-	project.ID = temp.ID
 
+	project.ID = temp.ID
+	for _, im := range temp.Images {
+		if !sliceContains(im, project.Images) {
+			project.Images = append(project.Images, im)
+		}
+	}
 	ok := updateProjectRow(project)
 	if !ok {
 		do500(w)
@@ -303,25 +311,80 @@ func saveFiles (r *http.Request, bucketName string, w http.ResponseWriter) {
 					projectName := r.PostFormValue("codefilename")
 					cookie, _ := r.Cookie("id")
 					userId := cookie.Value
-					if bucketName == "code" {
-						filename = projectName + userId
+					var contentType string
+
+					if bucketName == cfg.CodesBucket {
+						filename =  userId + projectName
+						contentType = "text/plain"
+					} else {
+						filename =  userId + filename
+						contentType = "image/jpeg"
 					}
-					deleteFileFromGrid(filename, bucketName)
-					writeFiletoGFS(bucketName, w, filename, file)
+
+					// deleteFileFromGCE(filename, bucketName)
+					writeFiletoGCE(bucketName, w, filename, file, r, contentType)
 			}
 		}
 	}
 
-func writeFiletoGFS(bucketName string, w http.ResponseWriter, newFilename string, file multipart.File) {
+func writeFiletoGCE(bucketName string, w http.ResponseWriter, newFilename string, file multipart.File, r *http.Request, contentType string) {
+	ctx := context.Background()
+	client, err := storage.NewClient(ctx, option.WithCredentialsFile(cfg.CloudStorageCredentials))
+	if err != nil {
+		log.Println("failed to create client: %v", err)
+		return
+	}
+	defer client.Close()
+	buf := &bytes.Buffer{}
+	d := &bucket_struct{
+		w:          buf,
+		ctx:        ctx,
+		client:     client,
+		bucket:     client.Bucket(bucketName),
+		bucketName: bucketName,
+		cleanUp:    []string{},
+	}
+	// d.cleanUp = append(d.cleanUp, newFilename)
+	// d.deleteFiles()
+	d.createFile(newFilename, file, contentType)
+	if d.failed {
+		w.WriteHeader(http.StatusInternalServerError)
+		buf.WriteTo(w)
+		log.Println("bucket file save failed")
+	} else {
+		w.WriteHeader(http.StatusOK)
+		buf.WriteTo(w)
+		log.Println("bucket file save succeeded")
+	}
+}
 
-		if gridFile, err := db.GridFS(bucketName).Create(newFilename); err != nil {
-			 do500(w)
-			 return
-		} else {
-			gridFile.SetName(newFilename)
-			if err := writeToGridFile(file, gridFile); err != nil {
-				 do500(w)
-				 return
-		 }
-	 }
+func deleteFileFromGCE(name string, bucketName string, r *http.Request, w http.ResponseWriter) {
+	ctx := context.Background()
+	client, err := storage.NewClient(ctx, option.WithCredentialsFile(cfg.CloudStorageCredentials))
+	if err != nil {
+		log.Println("failed to create client: %v", err)
+		return
+	}
+	defer client.Close()
+	buf := &bytes.Buffer{}
+	d := &bucket_struct{
+		w:          buf,
+		ctx:        ctx,
+		client:     client,
+		bucket:     client.Bucket(bucketName),
+		bucketName: bucketName,
+		cleanUp:    []string{},
+	}
+	d.cleanUp = append(d.cleanUp, name)
+	d.deleteFiles()
+
+	if d.failed {
+		w.WriteHeader(http.StatusInternalServerError)
+		buf.WriteTo(w)
+		log.Println("bucket file delete failed")
+	} else {
+		w.WriteHeader(http.StatusOK)
+		buf.WriteTo(w)
+		log.Println("bucket file delete succeeded")
+	}
 }

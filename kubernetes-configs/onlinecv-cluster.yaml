@@ -1,0 +1,140 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: mongodb-service
+spec:
+  ports:
+    - protocol: TCP
+      port: 27017
+      targetPort: 9376
+---
+kind: Endpoints
+apiVersion: v1
+metadata:
+  name: mongodb-service
+subsets:
+  - addresses:
+      - ip: 35.192.76.247
+    ports:
+      - port: 9376
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: redis-service
+spec:
+  ports:
+    - protocol: TCP
+      port: 6379
+      targetPort: 9378
+---
+kind: Endpoints
+apiVersion: v1
+metadata:
+  name: redis-service
+subsets:
+  - addresses:
+      - ip: 35.192.76.247
+    ports:
+      - port: 9378
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: mainapp-deployment
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        name: mainapp-pod
+    spec:
+      containers:
+          - name: mainapp
+            image: ahmaddiaa/onlinecv-backend
+            ports:
+              - containerPort: 3000
+            imagePullPolicy: Always
+            resources:
+              requests:
+                cpu: "20m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend-service
+  labels:
+    name: mainapp-pod
+spec:
+  type: NodePort
+  ports:
+    # the port that this service should serve on
+    - port: 3000
+      nodePort: 32000
+    # label keys and values that must match in order to receive traffic for this service
+  selector:
+    name: mainapp-pod
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: compile-deployment
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        name: compile-pod
+    spec:
+      containers:
+          - name:  compile-python
+            image: ahmaddiaa/onlinecv-compile-python
+            ports:
+              - containerPort: 8000
+            imagePullPolicy: Always
+            resources:
+              requests:
+                cpu: "80m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: compile-service
+  labels:
+    name: compile-pod
+spec:
+  ports:
+    - port: 8000
+  # label keys and values that must match in order to receive traffic for this service
+  selector:
+    name: compile-pod
+---
+apiVersion: autoscaling/v1
+kind: HorizontalPodAutoscaler
+metadata:
+  name: mainapp-autoscaler
+  namespace: default
+spec:
+  scaleTargetRef:
+    kind: Deployment
+    name: mainapp-deployment
+    subresource: scale
+  minReplicas: 1
+  maxReplicas: 3
+  cpuUtilization:
+    targetPercentage: 80
+---
+apiVersion: autoscaling/v1
+kind: HorizontalPodAutoscaler
+metadata:
+  name: compileservice-autoscaler
+  namespace: default
+spec:
+  scaleTargetRef:
+    kind: Deployment
+    name: compile-deployment
+    subresource: scale
+  minReplicas: 1
+  maxReplicas: 5
+  cpuUtilization:
+    targetPercentage: 80

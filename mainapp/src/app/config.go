@@ -50,6 +50,10 @@ type Config struct {
  	McdHost      string   `json:"MemcachedHost"`
 	McdPort      string   `json:"MemcachedPort"`
 	AppPort      string   `json:"AppPort"`
+	ImagesBucket string   `json:"ImagesBucket"`
+	CodesBucket  string   `json:"CodesBucket"`
+	CompileService string `json:"CompileService"`
+	CloudStorageCredentials string `json:"CloudStorageCredentials"`
 }
 
 // The configuration information for the app we're administering
