@@ -11,7 +11,7 @@ node {
         /* This builds the actual image; synonymous to
          * docker build on the command line */
         dir('mainapp') {
-           sh('setenv.sh)
+           sh('setenv.sh')
            app = docker.build("ahmaddiaa/onlinecv-backend")
 	}
     }
