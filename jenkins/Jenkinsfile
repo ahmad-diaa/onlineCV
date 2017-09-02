@@ -10,8 +10,10 @@ node {
     stage('Build image') {
         /* This builds the actual image; synonymous to
          * docker build on the command line */
-
-        app = docker.build("ahmaddiaa/onlinecv-backend")
+        dir('mainapp') {
+           sh('setenv.sh)
+           app = docker.build("ahmaddiaa/onlinecv-backend")
+	}
     }
 
     stage('Push image') {
