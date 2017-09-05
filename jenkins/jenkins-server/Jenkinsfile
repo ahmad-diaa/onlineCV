@@ -1,0 +1,53 @@
+node {
+    def app
+    def root = tool name: 'go1.9', type: 'go'
+
+    stage('clone repo') {
+        dir('onlinecv') {
+            git url: 'https://github.com/ahmad-diaa/onlineCV.git'
+        }
+    }
+    
+    stage('Build go binaries') {
+       withEnv(["PATH+GO=${root}/bin", "GOPATH=/var/jenkins_home/workspace/backend-deployment/onlinecv/mainapp/"]) {
+            sh 'go get app'
+            sh 'CGO_ENABLED=0 GOOS=linux go build app'
+       }
+       dir('onlinecv/python-opencv-app') {
+           withEnv(["PATH+GO=${root}/bin", "GOPATH=/var/jenkins_home/workspace/backend-deployment/onlinecv/python-opencv-app/"]) {
+                sh 'go get python-opencv-app'
+                sh 'CGO_ENABLED=0 GOOS=linux go build python-opencv-app'
+          }
+       }
+    }
+    stage('Build main app image') {
+        /* This builds the actual image; synonymous to
+         * docker build on the command line */
+        dir('onlinecv/mainapp/') {
+           app = docker.build("ahmaddiaa/onlinecv-backend")
+        }
+    }
+
+    stage('Push main app image') {
+        /* Finally, we'll push the image with two tags:
+         * First, the incremental build number from Jenkins
+         * Second, the 'latest' tag.
+         * Pushing multiple tags is cheap, as all the layers are reused. */
+        docker.withRegistry('https://registry.hub.docker.com', 'docker-hub-credentials') {
+            app.push("latest")
+        }
+    }
+    stage('Build compile image') {
+      dir('onlinecv/python-opencv-app/') {
+           app = docker.build("ahmaddiaa/onlinecv-compile-python")
+      }
+    }
+    
+    stage('Push compile image') {
+        docker.withRegistry('https://registry.hub.docker.com', 'docker-hub-credentials') {
+            app.push("latest")
+        }
+    }
+            
+}
+
