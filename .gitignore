@@ -4,11 +4,11 @@
 */src/google.golang.org/*
 */src/github.com/*
 */src/gopkg.in/*
+*/src/cloud.google.com/*
 mainapp/myconfig.json
 mainapp/config-dev.json
 mainapp/onlineCV-b3ad0190adc1.json
 mainapp/ca-certificates.crt
 python-opencv-app/ca-certificates.crt
 python-opencv-app/onlineCV-b3ad0190adc1.json
-
 
