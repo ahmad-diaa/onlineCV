@@ -5,6 +5,7 @@
 */src/github.com/*
 */src/gopkg.in/*
 */src/cloud.google.com/*
+*/bin/*
 mainapp/myconfig.json
 mainapp/config-dev.json
 mainapp/onlineCV-b3ad0190adc1.json
