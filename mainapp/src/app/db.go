@@ -42,7 +42,7 @@ type Project struct {
 // open the database
 func openDB() {
 	var err error
-	log.Println("opening database " + cfg.DbHost)
+	log.Println("starting database " + cfg.DbHost)
 	m, err := mgo.Dial(cfg.DbHost)
 	if err != nil {
 		log.Fatal(err)
