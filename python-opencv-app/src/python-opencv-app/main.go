@@ -35,14 +35,7 @@ var pythonFile string
 var requestFilenames []string
 var userID string
 
-func contains(target string, filenames []string) bool{
-  for _, value := range filenames {
-      if value == target {
-        return true
-      }
-  }
-  return false
-}
+
 func saveFiles(r *http.Request, w http.ResponseWriter) error{
     b, err := ioutil.ReadAll(r.Body)
   	defer r.Body.Close()
@@ -120,19 +113,6 @@ func saveFiles(r *http.Request, w http.ResponseWriter) error{
         }
     }
     return nil
-}
-
-func isImage(filename string) bool {
-  if strings.HasSuffix(filename, "jpg") {
-    return true
-  }
-  if strings.HasSuffix(filename, "png") {
-    return true
-  }
-  if strings.HasSuffix(filename, "jpeg") {
-      return true
-  }
-  return false
 }
 
 func runCodeHandler(w http.ResponseWriter, r *http.Request) {
