@@ -1,5 +1,8 @@
 package main
 
+import(
+  "strings"
+)
 func contains(target string, filenames []string) bool{
   for _, value := range filenames {
       if value == target {
