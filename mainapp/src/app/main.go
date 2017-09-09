@@ -21,10 +21,9 @@ func main() {
 	// open the database
 	openDB()
 	defer closeDB()
-	
+
 	connectToRedis()
-	// set up templates
-	buildTemplates()
+
 
 	// set up the routes... it's good to have these all in one place,
 	// since we need to be cautious about orders when there is a common
@@ -53,12 +52,12 @@ func main() {
 
 
 	// Static files
-	router.Register("/public/", "GET", handlePublicFile)   // NB: regexp
-	router.Register("/private/", "GET", handlePrivateFile) // NB: regexp
+	// router.Register("/public/", "GET", handlePublicFile)   // NB: regexp
+	// router.Register("/private/", "GET", handlePrivateFile) // NB: regexp
 	// The logged-in main page
-	router.Register("/app", "GET", handleApp)
+	// router.Register("/app", "GET", handleApp)
 	// The not-logged-in main page
-	router.Register("/", "GET", handleMain)
+	// router.Register("/", "GET", handleMain)
 
 	// print a diagnostic message and start the server
 	log.Println("Server running on port " + cfg.AppPort)

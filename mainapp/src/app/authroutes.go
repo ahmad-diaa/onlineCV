@@ -33,7 +33,8 @@ func handleGoogleRegister(w http.ResponseWriter, r *http.Request) {
 func handleGoogleCallback(w http.ResponseWriter, r *http.Request) {
 	res := processLoginReply(w, r)
 	if res == loginOk {
-		http.Redirect(w, r, "/app", http.StatusTemporaryRedirect)
+		log.Println(" okkk!! ")
+		http.Redirect(w, r, cfg.FrontendUrl, http.StatusTemporaryRedirect)
 		return
 	}
 
@@ -54,8 +55,9 @@ func handleGoogleCallback(w http.ResponseWriter, r *http.Request) {
 	} else {
 		log.Fatal("processLoginReply() returned invalid status")
 	}
+	log.Println(name + "  " + val)
 	http.SetCookie(w, &http.Cookie{Name: name, Value: val, Path: "/"})
-	http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
+	http.Redirect(w, r, cfg.FrontendUrl, http.StatusTemporaryRedirect)
 }
 
 // The route for '/logout' logs the user out and redirects to home

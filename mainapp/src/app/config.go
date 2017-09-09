@@ -54,6 +54,7 @@ type Config struct {
 	CodesBucket  string   `json:"CodesBucket"`
 	CompileService string `json:"CompileService"`
 	CloudStorageCredentials string `json:"CloudStorageCredentials"`
+  FrontendUrl             string `json:"FrontendUrl"`
 }
 
 // The configuration information for the app we're administering
